@@ -40,7 +40,7 @@ trait Metal {
 	private[metal]   def getExt( extName:String ) = exts.find(_.name == extName)
 
 	// ------ Start Principle ActorSystem w/MetalActor
-	private[nubilus] implicit val actorSystem   = ActorSystem(actorName, config)
+	private[nubilus] implicit val actorSystem  = ActorSystem(actorName, config)
 	actorSystem.actorOf(Props(new MetalActor(this)),"metal")
 
 	// ------ Lifecycle -- Load Extensions & Shutdown

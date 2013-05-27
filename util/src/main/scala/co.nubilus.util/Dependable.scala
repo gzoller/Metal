@@ -46,10 +46,10 @@ object Dependable {
 		val (hasDeps, noDeps) = deps.partition( d => d.dependents.size > 0 )
 		// Wait indefinitely for any w/deps (timeouts built into dep-processing)
 		val depResult = Await.result( sequence( hasDeps.map( _.isReady( timeout ) ) ), Duration.Inf)
-		depResult.zip(hasDeps).foreach({ case (tf,d) => if(!tf) p.problem("Dependable ["+d.name+"] failed/didn't initialize within the timeout window.") })
+		depResult.zip(hasDeps).foreach({ case (tf,d) => if(!tf) p.complain("Dependable ["+d.name+"] failed/didn't initialize within the timeout window.") })
 		// Wait w/timeout for no-deps
 		val noDepResult = Await.result( sequence( noDeps.map( nd => firstCompletedOf(Seq(nd.isReady(timeout), timeoutFuture))  ) ), Duration.Inf )
-		noDepResult.zip(noDeps).foreach({ case (tf,d) => if(!tf) p.problem("Dependable ["+d.name+"] failed/didn't initialize within the timeout window.") })
+		noDepResult.zip(noDeps).foreach({ case (tf,d) => if(!tf) p.complain("Dependable ["+d.name+"] failed/didn't initialize within the timeout window.") })
 		noDepResult ++ depResult
 	}
 
@@ -61,7 +61,7 @@ object Dependable {
 		else {
 			val finder  = all.head.getDependent
 			val req = all.map( _.dependents ).flatten.distinct
-			req.zip( req.map( d => finder(d))).foreach( { case (dName,found) => if(!found.isDefined) p.problem(s"Specified dependency [$dName] was not defined.") } )
+			req.zip( req.map( d => finder(d))).foreach( { case (dName,found) => if(!found.isDefined) p.complain(s"Specified dependency [$dName] was not defined.") } )
 			if( p.hasProblems ) 
 				(false,p)
 			else

@@ -26,19 +26,23 @@ import context._
 class MongoExtActor( me:MongoExt, mongoWorkerWait:Duration ) extends Actor {
 	val g = grater[MongoInfo]
 	def receive = {
-		// No need for a Future around this because there's no reply, hence no one is waiting anyway.
-		case "query" => {
+		case "query" => Future {
 			val ipList = me.dbIPs.toList
 
 			// send out parallel requests
 			val results = Await.result( Future.sequence(for( ip <- ipList ) yield { Future(inquireDb(ip)) }), mongoWorkerWait )
 			me.dbInfo.clear
 			me.dbInfo ++= ipList.zip( results )
+			// If this is the first time query ever processed, set our MongoExt to ready
+			if( !me._ready.isSet ) {
+				implicit val _readyCredential =  me._ready.allowAssignment
+				me._ready := true
+			}
 		}
 	}
 
 	def inquireDb( ip:String ) = {
-		var conn : MongoConnection = null // rare case this is ok
+		var conn   : MongoConnection = null // rare case null is ok
 		var result : Option[MongoInfo] = None
 		try {
 			if( java.net.InetAddress.getByName(ip).isReachable(1500) ) {
@@ -47,7 +51,7 @@ class MongoExtActor( me:MongoExt, mongoWorkerWait:Duration ) extends Actor {
 				result = Some( g.fromJSON(resultJS) )
 			}
 		} catch {
-			case t:Throwable => 
+			case t:Throwable => println("Boom! "+t)
 		} finally {
 			if( conn != null ) {
 				conn.close

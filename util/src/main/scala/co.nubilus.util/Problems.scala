@@ -8,9 +8,9 @@ package co.nubilus.util
 case class Problems() {
 	private val probs = collection.mutable.Queue[String]()
 
-	def problem( p:String ) = probs.enqueue(p)
+	def complain( p:String ) = probs.enqueue(p)
 	def getAndClear = {
-		val plist = probs.toList
+		val plist = probs.toList.distinct
 		probs.clear
 		plist
 	}

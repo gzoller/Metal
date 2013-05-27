@@ -41,39 +41,9 @@ class MetalTests extends FunSpec with MustMatchers with GivenWhenThen with Befor
 		                        env            = dev
 		                        org            = acme
 		                        actor_name     = nubilus
-		                        ready_wait     = "5 seconds"
+		                        ready_wait     = "1 second"
 		                        bingo          = aardvark
 		                        extensions     = ["co.nubilus.metal.test.ExtB","co.nubilus.metal.test.ExtA"]
-		                    }
-		                    """ + akkaConfig(p)
-	def config4( p:Int ) = """nubilus {
-		                        config_prefix  = "config/"
-		                        env            = dev
-		                        org            = acme
-		                        actor_name     = nubilus
-		                        ready_wait     = "1 second"
-		                        bingo          = dog
-		                        extensions     = ["co.nubilus.metal.test.ExtA","co.nubilus.metal.test.ExtB","co.nubilus.metal.test.ExtC"]
-		                    }
-		                    """ + akkaConfig(p)
-	def config5( p:Int ) = """nubilus {
-		                        config_prefix  = "config/"
-		                        env            = dev
-		                        org            = acme
-		                        actor_name     = nubilus
-		                        ready_wait     = "5 seconds"
-		                        bingo          = aardvark
-		                        extensions     = ["co.nubilus.metal.test.ExtC","co.nubilus.metal.test.Bogus"]
-		                    }
-		                    """ + akkaConfig(p)
-	def config6( p:Int ) = """nubilus {
-		                        config_prefix  = "config/"
-		                        env            = dev
-		                        org            = acme
-		                        actor_name     = nubilus
-		                        ready_wait     = "3 seconds"
-		                        bingo          = aardvark
-		                        extensions     = ["co.nubilus.metal.test.ExtC","co.nubilus.metal.test.ExtD","co.nubilus.metal.test.ExtE","co.nubilus.metal.test.ExtF"]
 		                    }
 		                    """ + akkaConfig(p)
 	def akkaConfig(p:Int) = s"""akka {
@@ -93,10 +63,7 @@ class MetalTests extends FunSpec with MustMatchers with GivenWhenThen with Befor
 
 	val metal1 = MyMetal( ConfigFactory.parseString( config1(9011) ) )
 	val metal2 = MyMetal( ConfigFactory.parseString( config2(9012) ) )
-	//val metal3 = MyMetal( ConfigFactory.parseString( config3(9023) ) )
-	// val metal4 = MyMetal( ConfigFactory.parseString( config4(9033) ) )
-	// val metal5 = MyMetal( ConfigFactory.parseString( config5(9043) ) )
-	// val metal6 = MyMetal( ConfigFactory.parseString( config6(9053) ) )
+	val metal3 = MyMetal( ConfigFactory.parseString( config3(9023) ) )
 	val timeoutDur = Duration("5 seconds")
 	implicit val timeout = akka.util.Timeout( timeoutDur.length, timeoutDur.unit )
 
@@ -115,58 +82,46 @@ class MetalTests extends FunSpec with MustMatchers with GivenWhenThen with Befor
 		it("Akka URIs must be properly generated - given host, default port") {
 			metal1.akkaUri( "blah", 9131, "1.2.3.4" ) must equal( "akka://nubilus@1.2.3.4:9131/user/blah" )
 		}
-		// it("Extension dependency checking must work -- Dependencies fine and ready after slight delay") {
-		// 	metal2.ready must be (true)
-		// 	metal2.getAndClearProblems must equal (List[String]())
-		// }
-		// it("Extension dependency checking must work -- Depends on un-defined extension") {
-		// 	metal5.ready must be (false)
-		// 	metal5.getAndClearProblems must equal (List("Extension [Bogus] depends on undefined extensions."))
-		// }
-		// it("Extension dependency checking must work -- Dependency not ready in time") {
-		// 	metal6.ready must be (false)
-		// 	println(metal6.getAndClearProblems)
-		// }
-		// it("Extensions must load and configuration properly layered") {
-		// 	Given("There are extensions to the base Metal")
-		// 	When("The extensions are loaded in-order")
-		// 	Then("The configuration should be similarly layered")
-		// 	metal2.config getString "nubilus.bingo" must be ("dog")
-		// 	val aa = metal2.getExt("A")
-		// 	aa must be ('defined)
-		// 	val a = aa.get.asInstanceOf[ExtA]
-		// 	a.bingo must be ("cat")
-		// 	a.loadedConfig.get getString "A.foo" must be ("bar")
-		// 	a.loadedConfig.get.hasPath("B.here") must be (false)
-		// 	val bb = metal2.getExt("B")
-		// 	bb must be ('defined)
-		// 	val b = bb.get.asInstanceOf[ExtB]
-		// 	b.bingo must be ("fish")
-		// 	b.loadedConfig.get getString "A.foo" must be ("bar")
-		// 	b.loadedConfig.get getString "B.here" must be ("there")
-		// }
+		it("Extensions must load and configuration properly layered") {
+			Given("There are extensions to the base Metal")
+			When("The extensions are loaded in-order")
+			Then("The configuration should be similarly layered")
+			metal2.config getString "nubilus.bingo" must be ("dog")
+			val aa = metal2.getExt("A")
+			aa must be ('defined)
+			val a = aa.get.asInstanceOf[ExtA]
+			a.bingo must be ("cat")
+			a.loadedConfig.get getString "A.foo" must be ("bar")
+			a.loadedConfig.get.hasPath("B.here") must be (false)
+			val bb = metal2.getExt("B")
+			bb must be ('defined)
+			val b = bb.get.asInstanceOf[ExtB]
+			b.bingo must be ("fish")
+			b.loadedConfig.get getString "A.foo" must be ("bar")
+			b.loadedConfig.get getString "B.here" must be ("there")
+		}
 		it("""Must answer the Ping message""") {
 			val resp = Await.result( metal2.actorSystem.actorFor(metal2.akkaUri("metal")) ? Ping(Map[String,Any]()), timeoutDur)
 			val s = resp.asInstanceOf[StatusMsg]
 			s.ready must equal (true)
 		}
-		// it("""Must answer the Ping message server with instance error (is server "valid")?""") {
-		// 	val resp = Await.result( metal3.actorSystem.actorFor(metal3.akkaUri("metal")) ? Ping(Map[String,Any]()), timeoutDur)
-		// 	val s = resp.asInstanceOf[StatusMsg]
-		// 	s.ready must equal (false)
-		// 	s.problems must be( List("Extension [B] depends on extension [A], which is missing or not yet defined."))
-		// }
-		// it("""Must answer the Ping message server any problems""") {
-		// 	metal2.problem("issue_1")
-		// 	metal2.problem("issue_2")
-		// 	val resp = Await.result( metal2.actorSystem.actorFor(metal2.akkaUri("metal")) ? Ping(Map[String,Any]()), timeoutDur)
-		// 	val s = resp.asInstanceOf[StatusMsg]
-		// 	s.problems must be( List("issue_1","issue_2") )
-		// 	metal2.problem("issue_3")
-		// 	val resp2 = Await.result( metal2.actorSystem.actorFor(metal2.akkaUri("metal")) ? Ping(Map[String,Any]()), timeoutDur)
-		// 	val s2 = resp2.asInstanceOf[StatusMsg]
-		// 	s2.problems must be( List("issue_3") )
-		// }
+		it("""Must answer the Ping message server with init problems (is server "valid")?""") {
+			val resp = Await.result( metal3.actorSystem.actorFor(metal3.akkaUri("metal")) ? Ping(Map[String,Any]()), timeoutDur)
+			val s = resp.asInstanceOf[StatusMsg]
+			s.ready must equal (false)
+			s.problems must be( List("Dependable [A] failed/didn't initialize within the timeout window.","Dependable [B] failed/didn't initialize within the timeout window."))
+		}
+		it("""Must answer the Ping message server with any problems""") {
+			metal2.problems.complain("issue_1")
+			metal2.problems.complain("issue_2")
+			val resp = Await.result( metal2.actorSystem.actorFor(metal2.akkaUri("metal")) ? Ping(Map[String,Any]()), timeoutDur)
+			val s = resp.asInstanceOf[StatusMsg]
+			s.problems must be( List("issue_1","issue_2") )
+			metal2.problems.complain("issue_3")
+			val resp2 = Await.result( metal2.actorSystem.actorFor(metal2.akkaUri("metal")) ? Ping(Map[String,Any]()), timeoutDur)
+			val s2 = resp2.asInstanceOf[StatusMsg]
+			s2.problems must be( List("issue_3") )
+		}
 		it("""Must propagate the Ping message's payload to the named extension""") {
 			Await.result( metal2.actorSystem.actorFor(metal2.akkaUri("metal")) ? Ping(Map("A"->"Hello, A")), timeoutDur)
 			Thread.sleep(500)  // Let the Future finish!
@@ -178,18 +133,12 @@ class MetalTests extends FunSpec with MustMatchers with GivenWhenThen with Befor
 			s.ready must be (true)
 			s.problems must be( List[String]() )
 		}
-		// it("""Must report system-not-ready within the given read-wait time window""") {
-		// 	metal4.instanceError must be( None )
-		// }
 	}
 
 	override def afterAll(configMap: org.scalatest.ConfigMap) {
 		metal1.shutdown
 		metal2.shutdown
-		// metal3.shutdown
-		// metal4.shutdown
-		// metal5.shutdown
-		// metal6.shutdown
+		metal3.shutdown
 	}
 }
 
@@ -218,33 +167,6 @@ class ExtB() extends T_Ext {
 	val name = "B"
 	def bingo = loadedConfig.get getString "nubilus.bingo"
 }
-// class ExtC() extends T_Ext {
-// 	val name = "C"
-// 	override def init( config:Config, metal:Metal ) = Future(false)
-// }
-// class ExtD() extends T_Ext {
-// 	val name = "D"
-// 	override def init( config:Config, metal:Metal ) = Future{
-// 		Thread.sleep(5000)
-// 		true
-// 	}
-// }
-// class ExtE() extends T_Ext {
-// 	val name = "E"
-// 	override def init( config:Config, metal:Metal ) = Future{
-// 		Thread.sleep(2000)
-// 		true
-// 	}
-// }
-// class ExtF() extends T_Ext {
-// 	val name = "F"
-// 	override def init( config:Config, metal:Metal ) = Future(false)
-// }
-// class Bogus() extends T_Ext {
-// 	val name = "Bogus"
-// 	override def init( config:Config, metal:Metal ) = Future(false)
-// }
-
 
 case class TestConfigLoader() extends ConfigLoader {
 	def load( cfgName:String ) = cfgName match {
