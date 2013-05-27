@@ -19,25 +19,22 @@ import concurrent.{ Await, Future }
 
 trait Dependable {
 
-	// --- Implemented by users
-	val name                    : String
-	val system                  : ActorSystem
-	val timeout                 : Duration
-	val dependents              : List[String]
+	// --- Initialized or specified by users
+	val name                    : String // intrinsic to implementing class...not typically set via initialization
+	val dependents              = new SetOnce[List[String]]
+	val getDependent            = new SetOnce[String => Option[Dependable]]
+
 	def readyMe                 : Boolean
-	val getDependent            : String => Option[Dependable]
 	//-------------------------
 
-	private val timeoutFuture   = after(FiniteDuration(timeout.length,timeout.unit), system.scheduler, global.prepare, Future.successful(false))
-
 	def isReady( timeout:Duration )(implicit system:ActorSystem, p:Problems) : Future[Boolean] = Future{
-		({ if( dependents.size > 0 )
-			Dependable.waitFor( dependents.map(d => getDependent(d).get), timeout )
+		({ if( dependents().size > 0 )
+			Dependable.waitFor( dependents().map(d => getDependent()(d).get), timeout )
 			else List(true) } :+ readyMe).reduce(_ && _)
 	}
 
-	def undefinedDeps = dependents.collect{
-		case d if(!getDependent(d).isDefined) => d
+	def undefinedDeps = dependents().collect{
+		case d if(!getDependent()(d).isDefined) => d
 	}
 }
 

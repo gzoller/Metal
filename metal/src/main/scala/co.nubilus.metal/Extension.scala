@@ -5,15 +5,31 @@
 
 package co.nubilus.metal
 
+import co.nubilus.util._
 import com.typesafe.config.Config
 import scala.collection.JavaConversions._
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait Extension {
-	//-------- Your Extension Implements or can Override These ----------
-	val name     : String
-	private[metal] def init( config:Config, metal:Metal ) : Future[Boolean]
+trait Extension extends Dependable {
+
+	val name      : String
+	val bareMetal = new SetOnce[Metal]
+
+	// The idea of init is to set up initialization values, NOT to perform the work of 
+	// getting the Extension ready.  The latter will happen when Metal calls the readyMe
+	// (via Dependable.waitForAll).
+	private[metal] def init( config:Config, metal:Metal ) : Config = {
+		implicit val dependentsCredential   = dependents.allowAssignment
+		implicit val getDependentCredential = getDependent.allowAssignment
+		implicit val bareMetalCredential    = bareMetal.allowAssignment
+		dependents   := (config getStringList name+".depends_on").toList
+		getDependent := metal.getExt
+		bareMetal    := metal
+		_init(config, metal)
+		config
+	}
+	protected def _init( config:Config, metal:Metal ) {} // override this one if needed
 
 	// If the administrative Ping message includes a payload for a named extension, this function is called,
 	// passing the payload in (must be cast to something meaningful).  No return is allowed because MetalActor
@@ -21,41 +37,6 @@ trait Extension {
 	private[metal] def status( payload:Any ){}
 
 	private[metal] def shutdown {}  // any shutdown cleanup here
-
-	//-------- You can, but shouldn't have to, override any of the following... ----------
-	private[metal] def _init( config:Config, metal:Metal ) : Config = {
-
-		val deps = (config getStringList name+".depends_on").map( dep => metal.getExt(dep) )
-
-		// Confirm all needed extensions are present
-		_ready = deps.foldLeft(true)( (exists,dep) => exists && dep.isDefined ) match {
-			case false => {
-				_errMsg = "Extension ["+name+"] depends on undefined extensions."
-				Future.successful(false)
-				}
-			// Wait for all dependent exts to be ready then put our Future on the pile
-			case true  => {
-				println("--- True ---")
-				val z = Await.result(Future.sequence(deps.map( d => d.get.isReady )), metal.readyWait ).foldLeft(true)( (a,b) => a && b ) match {
-					case true  => {
-						println(s"Deps for ext $name are ready")
-						init(config,metal)
-					}
-					case false => {
-						println(s"Deps for ext $name are NOT ready")
-						_errMsg = "Extension ["+name+"]'s' dependencies did not become ready in time."
-						Future.successful(false)
-						}
-					}
-				}
-		}
-		config
-	}
-	private var _ready  = Future.successful(false)
-	private var _errMsg = ""
-
-	private[metal] def isReady = _ready
-	private[metal] def error   = _errMsg
 }
 
 // S.D.G.

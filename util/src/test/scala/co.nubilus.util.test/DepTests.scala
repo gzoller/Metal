@@ -17,10 +17,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class DepTests extends FunSpec with MustMatchers with GivenWhenThen with BeforeAndAfterAll {
 
-	case class D( val name:String, val system:ActorSystem, val timeout:Duration, val dependents:List[String], val getDependent:(String)=>Option[Dependable] ) extends Dependable {
+	case class D( val name:String, val _dependents:List[String], val _getDependent:(String)=>Option[Dependable] ) extends Dependable {
+		implicit val dependentsCredential = dependents.allowAssignment
+		implicit val getDependentCredential = getDependent.allowAssignment
+		dependents   := _dependents
+		getDependent := _getDependent
 		def readyMe = true
 	}
-	case class Dfast( val name:String, val system:ActorSystem, val timeout:Duration, val dependents:List[String], val getDependent:(String)=>Option[Dependable] ) extends Dependable {
+	case class Dfast( val name:String, val _dependents:List[String], val _getDependent:(String)=>Option[Dependable] ) extends Dependable {
+		implicit val dependentsCredential = dependents.allowAssignment
+		implicit val getDependentCredential = getDependent.allowAssignment
+		dependents   := _dependents
+		getDependent := _getDependent
 		var _prepared = false
 		def readyMe = { 
 			if(!_prepared) 
@@ -30,7 +38,11 @@ class DepTests extends FunSpec with MustMatchers with GivenWhenThen with BeforeA
 			true 
 		}
 	}
-	case class Dslow( val name:String, val system:ActorSystem, val timeout:Duration, val dependents:List[String], val getDependent:(String)=>Option[Dependable] ) extends Dependable {
+	case class Dslow( val name:String, val _dependents:List[String], val _getDependent:(String)=>Option[Dependable] ) extends Dependable {
+		implicit val dependentsCredential = dependents.allowAssignment
+		implicit val getDependentCredential = getDependent.allowAssignment
+		dependents   := _dependents
+		getDependent := _getDependent
 		var _prepared = false
 		def readyMe = { 
 			if(!_prepared) 
@@ -40,7 +52,11 @@ class DepTests extends FunSpec with MustMatchers with GivenWhenThen with BeforeA
 			true 
 		}
 	}
-	case class Dnot( val name:String, val system:ActorSystem, val timeout:Duration, val dependents:List[String], val getDependent:(String)=>Option[Dependable] ) extends Dependable {
+	case class Dnot( val name:String, val _dependents:List[String], val _getDependent:(String)=>Option[Dependable] ) extends Dependable {
+		implicit val dependentsCredential = dependents.allowAssignment
+		implicit val getDependentCredential = getDependent.allowAssignment
+		dependents   := _dependents
+		getDependent := _getDependent
 		def readyMe = false
 	}
 
@@ -57,22 +73,22 @@ class DepTests extends FunSpec with MustMatchers with GivenWhenThen with BeforeA
 	val twoSec = Duration("2 seconds")
 
 	case class Block() {
-		val aa = D(    "A",sys,twoSec,List[String](),       finder)
-		val ba = D(    "B",sys,twoSec,List("C","D"),        finder)
-		val ca = D(    "C",sys,twoSec,List[String](),       finder)
-		val da = D(    "D",sys,twoSec,List[String](),       finder)
-		val ea = D(    "E",sys,twoSec,List("D"),            finder)
-		val fa = D(    "F",sys,twoSec,List("G","H","C","M"),finder)
-		val ga = Dfast("G",sys,twoSec,List[String](),       finder)
-		val ha = Dfast("H",sys,twoSec,List[String](),       finder)
-		val ia = D(    "I",sys,twoSec,List("J","K","C","F"),finder)
-		val ja = Dslow("J",sys,twoSec,List[String](),       finder)
-		val ka = Dslow("K",sys,twoSec,List[String](),       finder)
-		val la = Dnot ("L",sys,twoSec,List("B","A"),        finder)
-		val ma = Dfast("M",sys,twoSec,List[String](),       finder)
-		val na = D    ("N",sys,twoSec,List("O","P"),        finder)
-		val oa = D    ("O",sys,twoSec,List("XX","YY"), {(s:String) => None})
-		val pa = D    ("P",sys,twoSec,List("ZZ"),      {(s:String) => None})
+		val aa = D(    "A",List[String](),       finder)
+		val ba = D(    "B",List("C","D"),        finder)
+		val ca = D(    "C",List[String](),       finder)
+		val da = D(    "D",List[String](),       finder)
+		val ea = D(    "E",List("D"),            finder)
+		val fa = D(    "F",List("G","H","C","M"),finder)
+		val ga = Dfast("G",List[String](),       finder)
+		val ha = Dfast("H",List[String](),       finder)
+		val ia = D(    "I",List("J","K","C","F"),finder)
+		val ja = Dslow("J",List[String](),       finder)
+		val ka = Dslow("K",List[String](),       finder)
+		val la = Dnot ("L",List("B","A"),        finder)
+		val ma = Dfast("M",List[String](),       finder)
+		val na = D    ("N",List("O","P"),        finder)
+		val oa = D    ("O",List("XX","YY"), {(s:String) => None})
+		val pa = D    ("P",List("ZZ"),      {(s:String) => None})
 		val all = collection.mutable.HashMap("A"->aa, "B"->ba, "C"->ca, "D"->da, "E"->ea, "F"->fa, "G"->ga, "H"->ha, "I"->ia, "J"->ja, "K"->ka, "L"->la, "M"->ma)
 		def finder(s:String) : Option[Dependable] = all.get(s)
 	}

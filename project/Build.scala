@@ -30,14 +30,14 @@ import Dependencies._
 		shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
 	}
 
-	lazy val root = Project("root", file("."), settings = basicSettings) aggregate(util)//metal)//,mongoExt)
+	lazy val root = Project("root", file("."), settings = basicSettings) aggregate(util,metal)//,mongoExt)
 
-   //  lazy val metal = Project("metal", file("metal"))
-   //       .settings(basicSettings: _*)
-   //       .settings(libraryDependencies ++=
-			// compile(akka_actor, akka_slf4j, akka_remote, logback) ++
-			// test(scalatest)
-   //       )
+    lazy val metal = Project("metal", file("metal"))
+         .settings(basicSettings: _*)
+         .settings(libraryDependencies ++=
+			compile(akka_actor, akka_slf4j, akka_remote, logback) ++
+			test(scalatest)
+         ).dependsOn(util)
 
    //  lazy val mongoExt = Project("mongoExt", file("exts/mongo"))
    //       .settings(basicSettings: _*)

@@ -5,7 +5,7 @@
 
 package co.nubilus.util
 
-trait Problems {
+case class Problems() {
 	private val probs = collection.mutable.Queue[String]()
 
 	def problem( p:String ) = probs.enqueue(p)
@@ -16,7 +16,7 @@ trait Problems {
 	}
 	def hasProblems = probs.size > 0
 
-	def += ( pb:Problems ) = probs ++= pb.probs
+	def ++= ( pb:Problems ) = probs ++= pb.probs
 }
 
 // S.D.G.
