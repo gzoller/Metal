@@ -20,9 +20,8 @@ import Dependencies._
 		scalacOptions				:= Seq("-feature", "-deprecation", "-encoding", "utf8", "-unchecked"),
 		publish 					:= (),
 		publishLocal 				:= (),
-		assembleArtifact in packageScala := false
-// put this one in specific sub-project properties
-//		jarName in assembly := "shock.jar"
+		assembleArtifact in packageScala := false,
+		jarName in assembly         := "metal.jar"
 	)
 	
 	// configure prompt to show current project
@@ -30,21 +29,37 @@ import Dependencies._
 		shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
 	}
 
-	lazy val root = Project("root", file("."), settings = basicSettings) aggregate(util,metal,mongoExt)
+	lazy val root = Project("root", file("."), settings = basicSettings ++ sbtassembly.Plugin.assemblySettings) 
+		.aggregate(util,metal,mongoExt,topologyExt,ec2Ext)
+		.dependsOn(util,metal,mongoExt,topologyExt,ec2Ext)
 
     lazy val metal = Project("metal", file("metal"))
-         .settings(basicSettings: _*)
-         .settings(libraryDependencies ++=
+		.settings(basicSettings: _*)
+		.settings(libraryDependencies ++=
 			compile(akka_actor, akka_slf4j, akka_remote, logback) ++
 			test(scalatest)
-         ).dependsOn(util)
+		).dependsOn(util)
 
     lazy val mongoExt = Project("mongoExt", file("exts/mongo"))
-         .settings(basicSettings: _*)
-         .settings(libraryDependencies ++=
+		.settings(basicSettings: _*)
+		.settings(libraryDependencies ++=
 			compile(salat_core, salat_util, akka_actor, akka_slf4j, akka_remote, logback) ++
 			test(scalatest)
-         ).dependsOn(metal)
+		).dependsOn(metal)
+
+    lazy val topologyExt = Project("topologyExt", file("exts/topology"))
+		.settings(basicSettings: _*)
+		.settings(libraryDependencies ++=
+			compile(salat_core, salat_util, akka_actor, akka_slf4j, akka_remote, logback) ++
+			test(scalatest)
+		).dependsOn(metal)
+
+	lazy val ec2Ext = Project("ec2Ext", file("exts/ec2"))
+		.settings(basicSettings: _*)
+		.settings(libraryDependencies ++=
+			compile(salat_core, salat_util, akka_actor, akka_slf4j, akka_remote, logback) ++
+			test(scalatest)
+		).dependsOn(metal,topologyExt)
 
 	lazy val util = Project("util", file("util"))
 		.settings(basicSettings: _*)

@@ -1,7 +1,10 @@
-package co.nubilus.container.level0
+// ---- 
+// ----   Copyright (c) 2013 Greg Zoller
+// ----   All Rights Reserved
+// ---- 
 
-// Copyright (c) 2013 Greg Zoller
-// All rights reserved.
+package co.nubilus.metal
+package exts.ec2
 
 import scala.sys.process.{Process, ProcessIO}
 

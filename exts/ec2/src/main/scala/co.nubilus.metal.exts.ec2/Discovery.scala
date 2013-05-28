@@ -1,19 +1,14 @@
-package co.nubilus.container.level0
+// ---- 
+// ----   Copyright (c) 2013 Greg Zoller
+// ----   All Rights Reserved
+// ---- 
 
-// Copyright (c) 2013 Greg Zoller
-// All rights reserved.
+package co.nubilus.metal
+package exts.ec2
 
 import scala.xml._
 import scala.util.Try
-
-class Discovery( instanceGetter : InstanceGetter, nodeRoster : NodeRoster, org:String, env:String ) extends Thread {
-
-	override def run {
-		// Discover all *relevant* instances (those for our organization & environment)
-		Try( nodeRoster.newInfo( instanceGetter.getInstances.filter(n => n.org.getOrElse("") == org && n.env.getOrElse("") == env) ) ).toOption
-	}
-
-}
+import exts.topology._
 
 trait InstanceGetter {
 	def getInstances : Set[InstanceInfo]
@@ -61,24 +56,6 @@ trait EC2InstanceGetter extends InstanceGetter {
 
 case class EC2Instance() extends EC2InstanceGetter {
 	def getXML = XML.loadString( Util.runCmd("aws din") )
-}
-
-case class InstanceInfo(
-	id            :String,
-	name          :Option[String],
-	org           :Option[String],
-	env           :Option[String],
-	isRunning     :Boolean,
-	kind          :NodeKind.Value,
-	instType      :String,
-	zone          :String,
-	launchTime    :String,
-	privateIp     :String
-	)
-
-object NodeKind extends Enumeration {
-  val MDB, NODE, WEB, ADMIN, OTHER = Value
-  def fromString( n:String ) = Try(withName(n)).toOption.getOrElse(OTHER)
 }
 
 // S.D.G.
