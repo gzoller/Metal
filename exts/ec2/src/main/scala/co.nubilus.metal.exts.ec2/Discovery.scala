@@ -9,6 +9,7 @@ package exts.ec2
 import scala.xml._
 import scala.util.Try
 import exts.topology._
+import scala.sys.process.Process
 
 trait InstanceGetter {
 	def getInstances : Set[InstanceInfo]
@@ -55,7 +56,10 @@ trait EC2InstanceGetter extends InstanceGetter {
 }
 
 case class EC2Instance() extends EC2InstanceGetter {
-	def getXML = XML.loadString( Util.runCmd("aws din") )
+	def getXML = XML.loadString( runCmd("aws din") )
+
+	// Run a system command
+	private def runCmd( cmd:String ) : String = Process( cmd ).!!
 }
 
 // S.D.G.

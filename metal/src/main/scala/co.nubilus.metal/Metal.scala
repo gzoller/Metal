@@ -28,8 +28,8 @@ trait Metal {
 	private          val configPrefix  = basicConfig getString     "nubilus.config_prefix"
 	private[metal]   val config        = ConfigFactory.parseString("akka.remote.netty.hostname = \""+myHostname+"\"").withFallback( basicConfig )
 
-	private[nubilus] val org           = config getString          "nubilus.env"
-	private[nubilus] val env           = config getString          "nubilus.org"
+	private[nubilus] val org           = config getString          "nubilus.org"
+	private[nubilus] val env           = config getString          "nubilus.env"
 	private          val nettyPort     = config getInt             "akka.remote.netty.port"
 	private          val actorName     = config getString          "nubilus.actor_name"
 

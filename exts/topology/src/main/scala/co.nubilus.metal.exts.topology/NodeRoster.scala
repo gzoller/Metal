@@ -29,8 +29,8 @@ case class NodeRoster( presumedDead:Duration, problems:Problems ) {
 		val runningOnly = ii.filterNot( info => info.isRunning == false )
 
 		// Clear sketchy of entries that don't matter anymore
-		val newRunningIps = runningOnly.map(_.privateIp)
-		val curRunningIps = alive.map(_.privateIp)
+		val newRunningIps = runningOnly.map(_.privateIP)
+		val curRunningIps = alive.map(_.privateIP)
 		val sketchyGone   = sketchy.keys.toList.diff(newRunningIps.toList)
 		val goneAway = curRunningIps.diff( newRunningIps ) ++ sketchyGone // remove these from sketchy--they're dead according to aws
 		sketchy  --= goneAway
@@ -54,7 +54,7 @@ case class NodeRoster( presumedDead:Duration, problems:Problems ) {
 
 		// Replace alive content, filtering supposedly-alive nodes that aren't responsive, and any others that aren't running
 		alive.clear
-		alive ++= runningOnly.filterNot( ii => sketchy.contains(ii.privateIp) )
+		alive ++= runningOnly.filterNot( ii => sketchy.contains(ii.privateIP) )
 	}
 
 	def probablyAlive = alive.toSet // Return an immutable copy, please.
@@ -65,7 +65,7 @@ case class NodeRoster( presumedDead:Duration, problems:Problems ) {
 	// Keep track of those we detect may be dead (via heartbeat ping)
 	def markNonresponsive( nodeIp : String ) {
 		// Add to sketchy unless we already know the node is dead from aws.
-		alive.find(_.privateIp == nodeIp).fold()(suspect => {
+		alive.find(_.privateIP == nodeIp).fold()(suspect => {
 			sketchy.get( nodeIp ).fold( sketchy.put(nodeIp, new Date()) )(x => None)
 			alive.remove(suspect)
 			})
@@ -82,7 +82,7 @@ case class NodeRoster( presumedDead:Duration, problems:Problems ) {
 	private[metal] def reset            = { sketchy.clear; notified.clear; alive.clear }
 	private[metal] def iffy             = sketchy.toMap
 	private[metal] def notifyWho        = notified.toSet
-	private[metal] def probablyAliveIps = probablyAlive.map(_.privateIp)
+	private[metal] def probablyAliveIps = probablyAlive.map(_.privateIP)
 }
 
 // S.D.G.

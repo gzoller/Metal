@@ -11,7 +11,7 @@ import java.net.InetAddress
 case class Topology( alive:Set[InstanceInfo] ) {
 
 	private def myHostIp = InetAddress.getLocalHost.getHostAddress
-	private def myNode   = alive.find( _.privateIp == myHostIp )
+	private def myNode   = alive.find( _.privateIP == myHostIp )
 
 	// Produces Map[ zone -> Map[ kind -> InstanceInfo ] ]
 	private val collated = alive.groupBy(_.zone).map( { case (k,v) => (k,v.groupBy(_.kind)) } )

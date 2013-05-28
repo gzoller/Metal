@@ -18,7 +18,7 @@ case class InstanceInfo(
 	instType      :String,
 	zone          :String,
 	launchTime    :String,
-	privateIp     :String
+	privateIP     :String
 	)
 
 object NodeKind extends Enumeration {
