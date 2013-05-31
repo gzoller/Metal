@@ -29,16 +29,16 @@ class EC2Ext() extends Extension {
 	private[ec2] val _ready         = new SetOnce[Boolean]
 	private      val ec2Actor       = new SetOnce[ActorRef] 
 	private[ec2] val instanceGetter = new SetOnce[InstanceGetter]
-	private[ec2] val nodeRoster     = new SetOnce[NodeRoster]
+	private[ec2] val topology       = new SetOnce[Topology]
 
 	override def _init( config:Config, metal:Metal ) = {
 		// Configure ourselves
 		implicit val ec2ActorCredential       = ec2Actor.allowAssignment
 		implicit val instanceGetterCredential = instanceGetter.allowAssignment
-		implicit val nodeRosterCredential     = nodeRoster.allowAssignment
+		implicit val topologyCredential       = topology.allowAssignment
 		val ec2Period     = Duration(config getString "ec2.ec2_period")
 		instanceGetter   := Class.forName( (config getString "ec2.instance_getter") ).newInstance.asInstanceOf[InstanceGetter]
-		nodeRoster       := metal.getExt("topology").get.asInstanceOf[TopologyExt].nodeRoster
+		topology         := TopologyExt.getTopo(metal)
 		ec2Actor         := bareMetal.actorSystem.actorOf(Props(new EC2ExtActor(this)),"ext.ec2")
 
 		// Fire up the periodic ec2-status-getter

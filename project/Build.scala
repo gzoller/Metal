@@ -15,7 +15,7 @@ import Dependencies._
 		description 				:= "The mother of all API engines.",
 		startYear 					:= Some(2013),
 		scalaVersion 				:= "2.10.1",
-		parallelExecution in Test 	:= true,
+		parallelExecution in Test 	:= false,
 		resolvers ++= Dependencies.resolutionRepos,
 		scalacOptions				:= Seq("-feature", "-deprecation", "-encoding", "utf8", "-unchecked"),
 		publish 					:= (),
@@ -30,13 +30,13 @@ import Dependencies._
 	}
 
 	lazy val root = Project("root", file("."), settings = basicSettings ++ sbtassembly.Plugin.assemblySettings) 
-		.aggregate(util,metal,mongoExt,topologyExt,ec2Ext)
-		.dependsOn(util,metal,mongoExt,topologyExt,ec2Ext)
+		.aggregate(util,metal,mongoExt,topologyExt,ec2Ext,adminExt)
+		.dependsOn(util,metal,mongoExt,topologyExt,ec2Ext,adminExt)
 
     lazy val metal = Project("metal", file("metal"))
 		.settings(basicSettings: _*)
 		.settings(libraryDependencies ++=
-			compile(akka_actor, akka_slf4j, akka_remote, logback) ++
+			compile(salat_core, salat_util, akka_actor, akka_slf4j, akka_remote, logback) ++
 			test(scalatest)
 		).dependsOn(util)
 
@@ -55,6 +55,13 @@ import Dependencies._
 		).dependsOn(metal)
 
 	lazy val ec2Ext = Project("ec2Ext", file("exts/ec2"))
+		.settings(basicSettings: _*)
+		.settings(libraryDependencies ++=
+			compile(salat_core, salat_util, akka_actor, akka_slf4j, akka_remote, logback) ++
+			test(scalatest)
+		).dependsOn(metal,topologyExt)
+
+	lazy val adminExt = Project("adminExt", file("exts/admin"))
 		.settings(basicSettings: _*)
 		.settings(libraryDependencies ++=
 			compile(salat_core, salat_util, akka_actor, akka_slf4j, akka_remote, logback) ++

@@ -40,12 +40,12 @@ class EC2Tests extends FunSpec with MustMatchers with GivenWhenThen with BeforeA
 		                        }"""
 
     val metal  = MyMetal( ConfigFactory.parseString( config1(8844) ) )
-    val nr     = metal.getExt("topology").get.asInstanceOf[TopologyExt].nodeRoster
+    val nr     = TopologyExt.getTopo(metal)
     val getter = metal.getExt("ec2").get.asInstanceOf[EC2Ext].instanceGetter().asInstanceOf[Getter]
 
 	describe("=======================\n| --   EC2 Tests   -- |\n=======================") {
-		it("Must periodically retrieve AWS instance info and populate NodeRoster (TopologyExt)") {
-			Thread.sleep(4400)
+		it("Must periodically retrieve AWS instance info and populate Topology") {
+			Thread.sleep(4900)
 			getter.count must be >= (3)
 			nr.probablyAlive.map(_.privateIP) must be (Set("10.46.57.57", "10.151.77.204", "10.60.10.3", "10.139.10.117", "10.211.91.245"))
 		}

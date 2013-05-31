@@ -17,6 +17,7 @@ case class Problems() {
 	def hasProblems = probs.size > 0
 
 	def ++= ( pb:Problems ) = probs ++= pb.probs
+	def ++= ( probList : List[String] ) = probs ++= probList
 }
 
 // S.D.G.

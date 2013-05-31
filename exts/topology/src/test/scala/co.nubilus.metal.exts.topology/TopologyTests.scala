@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 import com.typesafe.config.{ Config, ConfigFactory }
 import Data._
 
-class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with BeforeAndAfterAll {
+class ToploogyTests extends FunSpec with MustMatchers with GivenWhenThen with BeforeAndAfterAll {
 
 	def config1( p:Int ) = """nubilus {
 		                        config_prefix  = "config/"
@@ -40,10 +40,10 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 		                        }"""
 
     val metal = MyMetal( ConfigFactory.parseString( config1(8811) ) )
-    val nr    = metal.getExt("topology").get.asInstanceOf[TopologyExt].nodeRoster
+    val nr    = TopologyExt.getTopo(metal)
 
-	describe("==============================\n| --   NodeRoster Tests   -- |\n==============================") {
-		it("Must load and update instance set changes (NodeRoster)") {
+	describe("===========================\n| --   Topology Tests   -- |\n=============================") {
+		it("Must load and update instance set changes") {
 			nr.reset
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6) )
 			nr.probablyAlive.size must equal(5)
@@ -57,7 +57,7 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			When("aws detects one of the nodes stopped")
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4_stopped,ii_5,ii_6) )
 
-			Then("NodeRoster must filter out the node that stopped")
+			Then("Topology must filter out the node that stopped")
 			nr.probablyAlive.size must equal(4)
 			nr.probablyAliveIps must not contain("100.01.01.103")
 		}
@@ -90,7 +90,7 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			And("aws confirms the node is actually dead/terminated")
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5) )
 			nr.probablyAlive.size must equal(4)
-			Then("NodeRoster clears the now-confirmed-dead node out of sketchy and cancels notifications to sentinal")
+			Then("Topology clears the now-confirmed-dead node out of sketchy and cancels notifications to sentinal")
 			nr.iffy.size must equal( 0 )
 			metal.problems.getAndClear must have size(0)
 			nr.notifyWho.size must equal( 0 )
@@ -106,7 +106,7 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			And("aws confirms the node is still alive but now not running")
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6_stopped) )
 			nr.probablyAlive.size must equal(4)
-			Then("NodeRoster clears the now-confirmed-dead node out of sketchy and cancels notifications to sentinal")
+			Then("Topology clears the now-confirmed-dead node out of sketchy and cancels notifications to sentinal")
 			nr.iffy.size must equal( 0 )
 			metal.problems.getAndClear must have size(0)
 			nr.notifyWho.size must equal( 0 )
@@ -120,14 +120,14 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			When("Someone marks a node as probably-dead (non-responsive)")
 			nr.markNonresponsive("100.01.01.105")
 			nr.probablyAlive.size must equal(4)
-			And("NodeRoster notifies sentinal aws still thinks this probably-dead node is alive")
+			And("Topology notifies sentinal aws still thinks this probably-dead node is alive")
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6) )
 			nr.iffy.size must equal( 1 )
 			metal.problems.getAndClear.head must equal ( "Node 100.01.01.105 appears to be non-responsive (not answering Akka ping)." )
 			nr.notifyWho.size must equal( 1 )
 			metal.problems.getAndClear must have size(0) 
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6) )
-			Then("NodeRoster must not notify the sentinal again about the same node during a given time window")
+			Then("Topology must not notify the sentinal again about the same node during a given time window")
 			nr.probablyAlive.size must equal(4)
 			nr.iffy.size must equal( 1 )
 			metal.problems.getAndClear must have size(0)  // no new notification sent
@@ -142,7 +142,7 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			When("Someone marks a node as probably-dead (non-responsive)")
 			nr.markNonresponsive("100.01.01.105")
 			nr.probablyAlive.size must equal(4)
-			And("NodeRoster notifies sentinal aws still thinks this probably-dead node is alive")
+			And("Topology notifies sentinal aws still thinks this probably-dead node is alive")
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6) )
 			nr.iffy.size must equal( 1 )
 			metal.problems.getAndClear.head must equal ( "Node 100.01.01.105 appears to be non-responsive (not answering Akka ping)." )
@@ -151,7 +151,7 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			Thread.sleep(2200)
 			metal.problems.getAndClear must have size(0)  // no new notification sent
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6) )
-			Then("NodeRoster must clear the sketchy/notified lists and treat the node normally again")
+			Then("Topology must clear the sketchy/notified lists and treat the node normally again")
 			nr.probablyAlive must have size(5)  // everything expired and all forgiven unless declared probably-dead again
 			nr.iffy must have size( 0 )
 			metal.problems.getAndClear must have size(0)  // no new notification sent
@@ -165,7 +165,7 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			nr.probablyAlive.size must equal(4)
 			When("aws detects a previously-stopped node is now running")
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6) )
-			Then("NodeRoster must recognize the new node and add it to the roster")
+			Then("Topology must recognize the new node and add it to the roster")
 			nr.probablyAlive.size must equal(5)
 			nr.iffy must have size( 0 )
 			metal.problems.getAndClear must have size(0)  // no new notification sent
@@ -179,7 +179,7 @@ class NodeRosterTests extends FunSpec with MustMatchers with GivenWhenThen with 
 			nr.probablyAlive.size must equal(4)
 			When("aws detects a brand-new, running node")
 			nr.newInfo( Set(ii_1,ii_2,ii_3_stopped,ii_4,ii_5,ii_6) )
-			Then("NodeRoster must recognize the new node and add it to the roster")
+			Then("Topology must recognize the new node and add it to the roster")
 			nr.probablyAlive.size must equal(5)
 			nr.iffy must have size( 0 )
 			metal.problems.getAndClear must have size(0)  // no new notification sent

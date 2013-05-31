@@ -18,7 +18,7 @@ class MetalActor( m:Metal ) extends Actor {
 	}
 }
 
-case class Ping(payload:Map[String,Any])  // payload = map[ ext_name -> object ]
+case class Ping(payload:Map[String,Any] = Map[String,Any]())  // payload = map[ ext_name -> object ]
 
 object StatusMsg {
 	def apply( m:Metal ) : StatusMsg = new StatusMsg( m.ready, m.problems.getAndClear )

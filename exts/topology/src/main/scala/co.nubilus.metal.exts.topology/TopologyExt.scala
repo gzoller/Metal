@@ -15,14 +15,18 @@ class TopologyExt() extends Extension {
 	val name    = "topology"
 	def readyMe = true
 
-	private[metal] val nodeRoster = new SetOnce[NodeRoster]
+	private[metal] val topology = new SetOnce[Topology]
 
 	override def _init( config:Config, metal:Metal ) = {
 		// Configure ourselves
-		implicit val nodeRosterCredential = nodeRoster.allowAssignment
+		implicit val topologyCredential = topology.allowAssignment
 		val presumedDead  = Duration(config getString "topology.presumed_dead")
-		nodeRoster       := NodeRoster(presumedDead, metal.problems)
+		topology         := Topology(presumedDead, metal.problems)
 	}
+}
+
+object TopologyExt {
+	def getTopo( m:Metal ) = m.getExt("topology").get.asInstanceOf[TopologyExt].topology
 }
 
 // S.D.G.

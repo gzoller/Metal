@@ -13,15 +13,6 @@ import com.mongodb.casbah.{ MongoDB, MongoConnection }
 import com.novus.salat._
 import scala.concurrent.duration._
 import scala.util.Try
-
-// set implicit context for Grater
-package object context {
-	val CustomTypeHint = "_t"
-	implicit val ctx = new Context {
-		val name = "JsonContext-As-Needed"
-		override val typeHintStrategy = StringTypeHintStrategy(when = TypeHintFrequency.WhenNecessary, typeHint = CustomTypeHint)
-	}
-}
 import context._
 
 class EC2ExtActor( me:EC2Ext ) extends Actor {
@@ -29,7 +20,7 @@ class EC2ExtActor( me:EC2Ext ) extends Actor {
 		// No need for a Future around this because there's no reply, hence no one is waiting anyway.
 		case "query" => {
 			// Do stuff to read cloud here...
-			val worked = Try( me.nodeRoster().newInfo( me.instanceGetter().getInstances.filter(n => n.org.getOrElse("") == me.bareMetal.org && n.env.getOrElse("") == me.bareMetal.env) ) ).toOption
+			val worked = Try( me.topology().newInfo( me.instanceGetter().getInstances.filter(n => n.org.getOrElse("") == me.bareMetal.org && n.env.getOrElse("") == me.bareMetal.env) ) ).toOption
 
 			// If this is the first time query ever processed, set our EC2Ext to ready
 			if( worked.isDefined && !me._ready.isSet ) {
